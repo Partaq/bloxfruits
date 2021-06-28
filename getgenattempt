@@ -1,0 +1,220 @@
+local PlaceID = game.PlaceId
+local AllIDs = {}
+local foundAnything = ""
+local actualHour = os.date("!*t").hour
+local Deleted = false
+
+local File = pcall(function()
+    AllIDs = game:GetService('HttpService'):JSONDecode(readfile("NotSameServers.json"))
+end)
+
+if not File then
+    table.insert(AllIDs, actualHour)
+    writefile("NotSameServers.json", game:GetService('HttpService'):JSONEncode(AllIDs))
+end
+
+function TPReturner()
+    local Site;
+    if foundAnything == "" then
+        Site = game.HttpService:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. PlaceID .. '/servers/Public?sortOrder=Asc&limit=100'))
+    else
+        Site = game.HttpService:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. PlaceID .. '/servers/Public?sortOrder=Asc&limit=100&cursor=' .. foundAnything))
+    end
+
+    local ID = ""
+    if Site.nextPageCursor and Site.nextPageCursor ~= "null" and Site.nextPageCursor ~= nil then
+        foundAnything = Site.nextPageCursor
+    end
+	
+    local num = 0;
+    for i,v in pairs(Site.data) do
+        local Possible = true
+        ID = tostring(v.id)
+        if tonumber(v.maxPlayers) > tonumber(v.playing) then
+            for _,Existing in pairs(AllIDs) do
+                if num ~= 0 then
+                    if ID == tostring(Existing) then
+                        Possible = false
+                    end
+                else
+                    if tonumber(actualHour) ~= tonumber(Existing) then
+                        local delFile = pcall(function()
+                            delfile("NotSameServers.json")
+                            AllIDs = {}
+                            table.insert(AllIDs, actualHour)
+                        end)
+                    end
+                end
+                num = num + 1
+            end
+            if Possible == true then
+                table.insert(AllIDs, ID)
+                wait()
+                pcall(function()
+                    writefile("NotSameServers.json", game:GetService('HttpService'):JSONEncode(AllIDs))
+                    wait()
+                    game:GetService("TeleportService"):TeleportToPlaceInstance(PlaceID, ID, game.Players.LocalPlayer)
+                end)
+                wait(4)
+            end
+        end
+    end
+end
+
+function Teleport()
+    while wait() do
+        pcall(function()
+            TPReturner()
+            if foundAnything ~= "" then
+                TPReturner()
+            end
+        end)
+    end
+end
+
+local function manualHop(text)
+    if text == "Yes" then
+     
+   Teleport()
+    
+    elseif text == "No" then
+        return
+    end
+end
+
+local bindableFunction = Instance.new("BindableFunction")
+bindableFunction.OnInvoke = manualHop
+
+fruitFound = false 
+local num = #getgenv().wantedFruits
+
+local clickgui = game.Players.LocalPlayer.PlayerGui.Main
+local clickButton = clickgui.ChooseTeam.Container.Pirates.Frame.ViewportFrame.TextButton
+
+if getgenv().shouldHop == true then 
+    firesignal(clickButton.MouseButton1Click)
+    clickgui.ChooseTeam.Visible = false
+    workspace.Camera.CameraType = Enum.CameraType.Custom
+    workspace.Camera.CameraSubject = game.Players.LocalPlayer.Character.Humanoid
+end
+
+if getgenv().findFruits then 
+    wait(15)
+for i, tools in pairs(workspace:GetChildren()) do
+    if tools:IsA('Tool') then
+    local toolName = tools.Name
+    local Character = game.Players.LocalPlayer.Character
+    local HumRP = Character:WaitForChild('HumanoidRootPart') 
+    print(toolName)
+    if getgenv().specificFruit then
+	for i, fruitName in ipairs(getgenv().wantedFruits) do
+	 if toolName == fruitName then 
+	    spawn(function()
+	   game.StarterGui:SetCore("SendNotification", {
+    		Title = "FRUIT FOUND!";
+       		Text = string.upper(toolName);
+       		Icon = ""; 
+        	Duration = 15;
+	    })	
+	    end)
+	        
+	     spawn(function()
+	        local OSTime = os.time();
+            local Time = os.date('!*t', OSTime);
+            local Avatar = 'https://cdn.discordapp.com/embed/avatars/4.png';
+            local Content = ' ';
+            local webLink = getgenv().webhookLink;
+            
+            local Embed = {
+               title = 'FRUIT WAS FOUND';
+               color = '0';
+               footer = { text = game.JobId };
+               author = {
+                   name = 'ROBLOX';
+                   url = 'https://www.roblox.com/';
+               };
+               fields = {
+                   {
+                       name = toolName or 'Fruit';
+                       value = game.Players.LocalPlayer.UserId or game.Players.LocalPlayer.Name;
+                   }
+               };
+               timestamp = string.format('%d-%d-%dT%02d:%02d:%02dZ', Time.year, Time.month, Time.day, Time.hour, Time.min, Time.sec);
+            };
+            (syn and syn.request or http_request) {
+               Url = webLink;
+               Method = 'POST';
+               Headers = {
+                   ['Content-Type'] = 'application/json';
+               };
+               Body = game:GetService'HttpService':JSONEncode( { content = Content; embeds = { Embed } } );
+            };
+	     end)
+
+	     fruitFound = true
+	     
+	    firetouchinterest(tools:WaitForChild('Handle'), HumRP, 0)
+	        
+	            if getgenv().shouldHop then 
+	              while true do 
+                  local VirtualUser=game:GetService('VirtualUser')
+                    game:GetService('Players').LocalPlayer.Idled:connect(function()
+                    VirtualUser:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+                    wait(1)
+                    VirtualUser:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+                    print('anti afk')
+                  end)
+	              end
+	            end 
+          	end
+         end
+      end
+   end
+end
+
+--No fruits found message.
+if fruitFound == false then
+    game.StarterGui:SetCore("SendNotification", {
+		Title = "damn bruh";
+   		Text = string.upper('your luck is straight dookie, you need to get get that checked, you found NO FRUITS LMAOOAOOAOAOAOAO');
+   	    Icon = ""; 
+        Duration = 5;
+     })
+end
+
+--Automatic serverhop is disabled, attempt manual server hop message.
+if getgenv().shouldHop == false then
+    game.StarterGui:SetCore("SendNotification", {
+		 Title = "Would you like to server hop?";
+   		 Text = string.upper('You have autoserver hop turned off.');
+   	     Icon = ""; 
+         Duration = 15;
+         Callback = bindableFunction; 
+         Button1 = "Yes"; 
+         Button2 = "No"; 
+    })  
+end   
+
+if getgenv().shouldHop == true then
+if fruitFound then return end
+if getgenv().shouldHop == false then return end
+ local hintHop = Instance.new('Hint', workspace)
+
+    repeat wait(1) hintHop.Text = 'Auto Server-Hop: '..getgenv().timeHop getgenv().timeHop = getgenv.timeHop - 1  
+    until getgenv().timeHop == -1
+        
+ spawn(function()
+     hintHop.Text = 'Server-hopping.'
+     wait(.5)
+     hintHop.Text = 'Server-hopping..'
+     wait(.5)
+     hintHop.Text = 'Server-hopping...'
+     wait(.5)
+ end)
+ 
+ Teleport()
+ wait(10)
+ loadstring(game:HttpGet(('https://raw.githubusercontent.com/Partaq/bloxfruitserverhop/main/dfhopper.txt'),true))() 
+
+end
+end
