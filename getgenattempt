@@ -204,7 +204,6 @@ if getgenv().shouldHop == true then
 if fruitFound then return end
 if getgenv().shouldHop == false then return end
  local hintHop = Instance.new('Hint', workspace)
- local timerhop = 
     repeat wait(1) hintHop.Text = 'Auto Server-Hop: '..getgenv().timeHop getgenv().timeHop = getgenv().timeHop - 1  
     until getgenv().timeHop == -1
         
