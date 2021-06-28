@@ -200,8 +200,8 @@ if fruitFound then return end
 if getgenv().shouldHop == false then return end
 local timerHop = getgenv().timeHop
  local hintHop = Instance.new('Hint', workspace)
-    repeat wait(1) hintHop.Text = 'Auto Server-Hop: '..timerHop timerHop = timerHop - 1  
-    until timerHop == -1
+    repeat wait(1) hintHop.Text = 'Auto Server-Hop: '..getgenv().timeHop getgenv().timeHop = getgenv().timeHop - 1  
+    until getgenv().timeHop == -1
         
  spawn(function()
      hintHop.Text = 'Server-hopping.'
